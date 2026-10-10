@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obyetivo</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 style="font-size: 1rem; font-weight: 700;">🎯 Obyetivo</h1>
+            <span id="current-date-header" class="header-date"></span>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="app-main">
+        
+        <!-- Vista 1: Hoy -->
+        <section id="view-today" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            
+            <!-- Lista de Cuentas Regresivas (Metas Fijas) -->
+            <div class="card" style="padding: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--slate-700);">🚩 Próximos Hitos / Fechas Límite</span>
+                    <button onclick="openFixedGoalModal()" class="btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.65rem;">+ Agregar Meta</button>
+                </div>
+                <div id="fixed-goals-container" class="fixed-goals-list">
+                    <!-- Metas inyectadas dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Progreso del Día con Racha -->
+            <div class="card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <h2 style="font-size: 1rem; font-weight: 700;">Acciones para hoy</h2>
+                        <span id="streak-badge" class="streak-badge">🔥 0 días</span>
+                    </div>
+                    <p id="today-subtitle" style="font-size: 0.75rem; color: var(--slate-400); margin-bottom: 0.75rem;"></p>
+                    
+                    <div class="progress-container">
+                        <div id="progress-bar" class="progress-fill"></div>
+                    </div>
+                    <div class="progress-info" style="margin-top: 0.4rem;">
+                        <span id="progress-text">0 de 0 completadas</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                </div>
+
+                <div id="today-tasks-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                    <!-- Se inyecta dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista 2: Seguimiento General -->
+        <section id="view-global-tracking" class="hidden">
+            <div class="card">
+                <div>
+                    <h2 style="font-size: 1rem; font-weight: 700;">Seguimiento General</h2>
+                    <p style="font-size: 0.75rem; color: var(--slate-400);">Consolidado de cumplimiento por mes</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Seleccionar Mes (Últimos 6 meses)</label>
+                    <select id="global-month-select" onchange="renderGlobalTrackingView()" class="form-input"></select>
+                </div>
+
+                <div style="background: var(--slate-50); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 0.7rem; color: var(--slate-400); display: block;">Adherencia Global</span>
+                        <span id="global-adherence-rate" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">0%</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.7rem; color: var(--slate-400); display: block;">Días Cumplidos / Evaluables</span>
+                        <span id="global-days-ratio" style="font-size: 0.85rem; font-weight: 600; color: var(--slate-700);">0 / 0</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mapa de Calor del Mes</label>
+                    <div id="global-tracking-grid" class="calendar-grid"></div>
+                </div>
+
+                <div class="legend-container">
+                    <div class="legend-item"><div class="legend-box" style="background: var(--emerald-500);"></div> Completo</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--amber-500);"></div> Parcial</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--rose-500);"></div> Fallado</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--slate-400);"></div> Descanso</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista 3: Mis Programas -->
+        <section id="view-programs" class="hidden" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="card" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="font-size: 1rem; font-weight: 700;">Mis Programas</h2>
+                    <p style="font-size: 0.75rem; color: var(--slate-400);">Planes y objetivos activos</p>
+                </div>
+                <button onclick="switchTab('new')" class="btn-primary btn-sm">+ Nuevo</button>
+            </div>
+            <div id="programs-list-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- Se inyecta dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Vista 4: Seguimiento Específico de un Programa -->
+        <section id="view-program-tracking" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 id="prog-tracking-title" style="font-size: 1rem; font-weight: 700;">Seguimiento</h2>
+                    <button onclick="switchTab('programs')" class="btn-secondary btn-sm">Volver</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Seleccionar Mes (Últimos 6 meses)</label>
+                    <select id="prog-month-select" onchange="renderProgramTrackingView()" class="form-input"></select>
+                </div>
+
+                <div style="background: var(--slate-50); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 0.7rem; color: var(--slate-400); display: block;">Adherencia del Programa</span>
+                        <span id="prog-adherence-rate" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">0%</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.7rem; color: var(--slate-400); display: block;">Días Cumplidos / Evaluables</span>
+                        <span id="prog-days-ratio" style="font-size: 0.85rem; font-weight: 600; color: var(--slate-700);">0 / 0</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mapa de Calor del Mes</label>
+                    <div id="prog-tracking-grid" class="calendar-grid"></div>
+                </div>
+
+                <div class="legend-container">
+                    <div class="legend-item"><div class="legend-box" style="background: var(--emerald-500);"></div> Completo</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--amber-500);"></div> Parcial</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--rose-500);"></div> Fallado</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--slate-400);"></div> Descanso</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista 5: Crear / Editar Programa -->
+        <section id="view-form" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 id="form-title" style="font-size: 1rem; font-weight: 700;">Nuevo Programa</h2>
+                    <button onclick="switchTab('programs')" class="btn-secondary btn-sm">Cancelar</button>
+                </div>
+
+                <form id="program-form" onsubmit="saveProgram(event)" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                    <input type="hidden" id="edit-program-id">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nombre del Objetivo / Programa</label>
+                        <input type="text" id="prog-name" required placeholder="Ej. Logística Viajes" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Programación</label>
+                        <select id="prog-type" onchange="renderFormBuilder()" class="form-input">
+                            <option value="FASES">Por Fases (Rango de fechas y bloques)</option>
+                            <option value="SEMANAL">Por Semanas (Matriz Lunes - Domingo)</option>
+                            <option value="MENSUAL">Mensual (Calendario específico del mes)</option>
+                        </select>
+                    </div>
+
+                    <div id="builder-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- Se inyecta dinámicamente -->
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="margin-top: 0.5rem;">Guardar Programa</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal para Agregar/Editar Meta Fija -->
+    <div id="fixed-goal-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 22rem; background: white;">
+            <h3 style="font-size: 0.9rem; font-weight: 700;">Nueva Meta Fija</h3>
+            <p style="font-size: 0.7rem; color: var(--slate-400);">Ingresa un evento con fecha objetivo principal:</p>
+            <div class="form-group" style="margin-top: 0.5rem;">
+                <label class="form-label">Nombre del Evento</label>
+                <input type="text" id="fixed-goal-title" class="form-input" placeholder="Ej. Subida al Páramo del Sol">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha Objetivo / Límite</label>
+                <input type="date" id="fixed-goal-date" class="form-input">
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button type="button" onclick="closeFixedGoalModal()" class="btn-secondary" style="flex: 1;">Cancelar</button>
+                <button type="button" onclick="saveFixedGoal()" class="btn-primary" style="flex: 1;">Guardar Meta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Actividades de un Día Específico del Mes -->
+    <div id="day-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 22rem; background: white;">
+            <h3 id="modal-day-title" style="font-size: 0.9rem; font-weight: 700;">Editar Día</h3>
+            <p style="font-size: 0.7rem; color: var(--slate-400);">Ingresa las actividades separadas por coma para este día:</p>
+            <input type="text" id="modal-day-input" class="form-input" placeholder="Ej. Comprar equipo, revisar ruta">
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button type="button" onclick="closeDayModal()" class="btn-secondary" style="flex: 1;">Cancelar</button>
+                <button type="button" onclick="saveDayModal()" class="btn-primary" style="flex: 1;">Guardar Día</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Retroactivo para Auditoría de Un Día Pasado -->
+    <div id="audit-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 22rem; background: white;">
+            <h3 id="audit-modal-title" style="font-size: 0.9rem; font-weight: 700;">Auditoría de Día</h3>
+            <p id="audit-modal-subtitle" style="font-size: 0.7rem; color: var(--slate-400);"></p>
+            <div id="audit-tasks-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;"></div>
+            <button type="button" onclick="closeAuditModal()" class="btn-primary" style="margin-top: 0.75rem;">Cerrar Auditoría</button>
+        </div>
+    </div>
+
+    <!-- Navegación Inferior -->
+    <nav class="bottom-nav">
+        <button onclick="switchTab('today')" id="nav-today" class="nav-btn active">
+            <span class="nav-icon">📅</span>
+            <span>Hoy</span>
+        </button>
+        <button onclick="switchTab('global-tracking')" id="nav-global-tracking" class="nav-btn">
+            <span class="nav-icon">📊</span>
+            <span>Seguimiento</span>
+        </button>
+        <button onclick="switchTab('programs')" id="nav-programs" class="nav-btn">
+            <span class="nav-icon">⚙️</span>
+            <span>Programas</span>
+        </button>
+    </nav>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        let programs = JSON.parse(localStorage.getItem('metadiaria_programs')) || [];
+        let completedTasks = JSON.parse(localStorage.getItem('metadiaria_completed')) || {};
+        let fixedGoals = JSON.parse(localStorage.getItem('metadiaria_fixed_goals')) || [
+            { id: 'g_paramo', title: 'Páramo del Sol', targetDate: '2027-01-15' }
+        ];
+        
+        let tempMonthlyDays = {}; 
+        let activeEditingDay = null;
+        let activeTrackingProgId = null;
+
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateHeaderDate();
+            populateMonthSelectors();
+            renderFixedGoals();
+            renderTodayView();
+            renderProgramsList();
+        });
+
+        function updateHeaderDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const todayStr = new Date().toLocaleDateString('es-CO', options);
+            document.getElementById('current-date-header').innerText = todayStr;
+            document.getElementById('today-subtitle').innerText = `Metas correspondientes al ${todayStr}`;
+        }
+
+        // --- CÁLCULO DE RACHA DE CONSISTENCIA ---
+        function calculateStreak() {
+            let streak = 0;
+            let checkDate = new Date();
+            
+            // Evaluar HOY primero
+            const todayKey = formatDateKey(checkDate);
+            const todayTasks = getGlobalTasksForDate(checkDate);
+            
+            let todayCompleted = false;
+            if (todayTasks.length > 0) {
+                let doneCount = todayTasks.filter(item => completedTasks[item.taskId]).length;
+                if (doneCount === todayTasks.length) {
+                    streak++;
+                    todayCompleted = true;
+                }
+            }
+
+            // Evaluar días anteriores consecutivos hacia atrás
+            checkDate.setDate(checkDate.getDate() - 1);
+
+            while (true) {
+                const dateKey = formatDateKey(checkDate);
+                const tasks = getGlobalTasksForDate(checkDate);
+
+                if (tasks.length === 0) {
+                    // Día de descanso total: no rompe la racha, retrocede un día más
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    continue;
+                }
+
+                let doneCount = tasks.filter(item => completedTasks[item.taskId]).length;
+                if (doneCount === tasks.length) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    // Se rompió la racha en este día pasado
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function getGlobalTasksForDate(dateObj) {
+            const dateKey = formatDateKey(dateObj);
+            const dayOfWeek = dateObj.getDay();
+            const mapDays = [6, 0, 1, 2, 3, 4, 5];
+            const dayIndex = mapDays[dayOfWeek];
+            const dayNumber = dateObj.getDate();
+            const monthYear = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+
+            let allTasks = [];
+            programs.forEach(prog => {
+                let tasks = getProgramTasksForDate(prog, dateKey, dayIndex, dayNumber, monthYear);
+                tasks.forEach((tText, idx) => {
+                    allTasks.push({
+                        progName: prog.nombre,
+                        taskText: tText,
+                        taskId: `${prog.id}-${dateKey}-${idx}`
+                    });
+                });
+            });
+            return allTasks;
+        }
+
+        // --- GESTIÓN DE METAS FIJAS ---
+        function renderFixedGoals() {
+            const container = document.getElementById('fixed-goals-container');
+            container.innerHTML = '';
+
+            if (fixedGoals.length === 0) {
+                container.innerHTML = '<p style="font-size: 0.75rem; color: var(--slate-400); text-align: center; padding: 0.5rem;">No hay metas fijas agregadas.</p>';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            fixedGoals.forEach(goal => {
+                const target = new Date(goal.targetDate + 'T00:00:00');
+                const diffTime = target - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let dayText = '';
+                if (diffDays > 0) {
+                    dayText = `Faltan ${diffDays} días`;
+                } else if (diffDays === 0) {
+                    dayText = '¡Es Hoy! 🎉';
+                } else {
+                    dayText = `Pasaron ${Math.abs(diffDays)} días`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'countdown-card';
+                card.innerHTML = `
+                    <div class="countdown-info">
+                        <span class="countdown-title">${goal.title}</span>
+                        <span class="countdown-subtext">${dayText}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="countdown-days-badge">${diffDays >= 0 ? diffDays : 0}d</span>
+                        <span onclick="deleteFixedGoal('${goal.id}')" style="cursor: pointer; opacity: 0.7; font-size: 0.75rem; padding: 0.2rem;">✕</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openFixedGoalModal() {
+            document.getElementById('fixed-goal-title').value = '';
+            document.getElementById('fixed-goal-date').value = '';
+            document.getElementById('fixed-goal-modal').classList.remove('hidden');
+        }
+
+        function closeFixedGoalModal() {
+            document.getElementById('fixed-goal-modal').classList.add('hidden');
+        }
+
+        function saveFixedGoal() {
+            const title = document.getElementById('fixed-goal-title').value.trim();
+            const date = document.getElementById('fixed-goal-date').value;
+
+            if (!title || !date) {
+                alert('Por favor completa el título y la fecha objetivo.');
+                return;
+            }
+
+            fixedGoals.push({
+                id: 'g_' + Date.now(),
+                title: title,
+                targetDate: date
+            });
+
+            localStorage.setItem('metadiaria_fixed_goals', JSON.stringify(fixedGoals));
+            closeFixedGoalModal();
+            renderFixedGoals();
+        }
+
+        function deleteFixedGoal(id) {
+            if (confirm("¿Borrar esta meta fija?")) {
+                fixedGoals = fixedGoals.filter(g => g.id !== id);
+                localStorage.setItem('metadiaria_fixed_goals', JSON.stringify(fixedGoals));
+                renderFixedGoals();
+            }
+        }
+
+        function populateMonthSelectors() {
+            const globalSelect = document.getElementById('global-month-select');
+            const progSelect = document.getElementById('prog-month-select');
+            
+            if (!globalSelect || !progSelect) return;
+            globalSelect.innerHTML = '';
+            progSelect.innerHTML = '';
+
+            const now = new Date();
+            for (let i = 0; i < 6; i++) {
+                let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                let y = d.getFullYear();
+                let m = d.getMonth();
+                let val = `${y}-${String(m + 1).padStart(2, '0')}`;
+                let label = `${monthNames[m]} ${y}`;
+
+                let opt1 = new Option(label, val);
+                let opt2 = new Option(label, val);
+
+                globalSelect.add(opt1);
+                progSelect.add(opt2);
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('view-today').classList.add('hidden');
+            document.getElementById('view-global-tracking').classList.add('hidden');
+            document.getElementById('view-programs').classList.add('hidden');
+            document.getElementById('view-program-tracking').classList.add('hidden');
+            document.getElementById('view-form').classList.add('hidden');
+            
+            document.getElementById('nav-today').classList.remove('active');
+            document.getElementById('nav-global-tracking').classList.remove('active');
+            document.getElementById('nav-programs').classList.remove('active');
+
+            if (tab === 'today') {
+                document.getElementById('view-today').classList.remove('hidden');
+                document.getElementById('nav-today').classList.add('active');
+                renderFixedGoals();
+                renderTodayView();
+            } else if (tab === 'global-tracking') {
+                document.getElementById('view-global-tracking').classList.remove('hidden');
+                document.getElementById('nav-global-tracking').classList.add('active');
+                renderGlobalTrackingView();
+            } else if (tab === 'programs') {
+                document.getElementById('view-programs').classList.remove('hidden');
+                document.getElementById('nav-programs').classList.add('active');
+                renderProgramsList();
+            } else if (tab === 'new') {
+                document.getElementById('view-form').classList.remove('hidden');
+                document.getElementById('form-title').innerText = "Nuevo Programa";
+                document.getElementById('edit-program-id').value = "";
+                document.getElementById('prog-name').value = "";
+                document.getElementById('prog-type').value = "FASES";
+                tempMonthlyDays = {};
+                renderFormBuilder();
+            } else if (tab === 'program-tracking') {
+                document.getElementById('view-program-tracking').classList.remove('hidden');
+                document.getElementById('nav-programs').classList.add('active');
+            }
+        }
+
+        // --- VISTA HOY ---
+        function renderTodayView() {
+            const container = document.getElementById('today-tasks-container');
+            container.innerHTML = '';
+            
+            const now = new Date();
+            const allTasksForToday = getGlobalTasksForDate(now);
+
+            // Actualizar Racha
+            const streak = calculateStreak();
+            document.getElementById('streak-badge').innerText = `🔥 ${streak} ${streak === 1 ? 'día' : 'días'}`;
+
+            if (allTasksForToday.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem 1rem; color: var(--slate-400);">
+                        <p style="font-size: 0.875rem;">No hay actividades programadas para hoy.</p>
+                    </div>`;
+                updateProgress(0, 0);
+                return;
+            }
+
+            let completedCount = 0;
+            allTasksForToday.forEach(item => {
+                const isChecked = completedTasks[item.taskId] || false;
+                if (isChecked) completedCount++;
+
+                const div = document.createElement('div');
+                div.className = `task-item ${isChecked ? 'completed' : ''}`;
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleTask('${item.taskId}')" style="width: 1.25rem; height: 1.25rem; accent-color: var(--primary); cursor: pointer;">
+                        <div>
+                            <p class="task-text ${isChecked ? 'completed' : ''}" style="font-size: 0.875rem; font-weight: 500; color: var(--slate-800);">${item.taskText}</p>
+                            <span class="badge">${item.progName}</span>
+                        </div>
+                    </div>`;
+                container.appendChild(div);
+            });
+
+            updateProgress(completedCount, allTasksForToday.length);
+        }
+
+        function toggleTask(taskId) {
+            completedTasks[taskId] = !completedTasks[taskId];
+            localStorage.setItem('metadiaria_completed', JSON.stringify(completedTasks));
+            renderTodayView();
+        }
+
+        function updateProgress(completed, total) {
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            document.getElementById('progress-text').innerText = `${completed} de ${total} completadas`;
+            document.getElementById('progress-percent').innerText = `${percent}%`;
+        }
+
+        // --- SEGUIMIENTO GENERAL ---
+        function renderGlobalTrackingView() {
+            const selectVal = document.getElementById('global-month-select').value;
+            if (!selectVal) return;
+            const [year, monthVal] = selectVal.split('-').map(Number);
+            const month = monthVal - 1; 
+
+            const now = new Date();
+            const isCurrentMonth = (now.getFullYear() === year && now.getMonth() === month);
+            const maxEvaluatedDay = isCurrentMonth ? now.getDate() : 31;
+
+            const grid = document.getElementById('global-tracking-grid');
+            grid.innerHTML = '';
+
+            const diasSem = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            diasSem.forEach(d => {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'calendar-day-header';
+                headerCell.innerText = d;
+                grid.appendChild(headerCell);
+            });
+
+            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            let evaluatedDays = 0;
+            let completedDays = 0;
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const dObj = new Date(year, month, day);
+                const dateKey = formatDateKey(dObj);
+                const allGlobalTasks = getGlobalTasksForDate(dObj);
+
+                let cellStatus = 'status-rest';
+                const isEvaluatedDate = day <= maxEvaluatedDay;
+
+                if (allGlobalTasks.length > 0 && isEvaluatedDate) {
+                    evaluatedDays++;
+                    let doneCount = 0;
+                    allGlobalTasks.forEach(item => {
+                        if (completedTasks[item.taskId]) doneCount++;
+                    });
+
+                    if (doneCount === allGlobalTasks.length) {
+                        cellStatus = 'status-complete';
+                        completedDays++;
+                    } else if (doneCount > 0) {
+                        cellStatus = 'status-partial';
+                    } else {
+                        cellStatus = 'status-failed';
+                    }
+                }
+
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell ${cellStatus}`;
+                cell.style.opacity = isEvaluatedDate ? '1' : '0.4';
+                cell.innerHTML = `
+                    <span class="calendar-day-number">${day}</span>
+                    <div class="heatmap-indicator"></div>
+                `;
+                cell.onclick = () => openAuditModalGlobal(dateKey, allGlobalTasks);
+                grid.appendChild(cell);
+            }
+
+            const rate = evaluatedDays > 0 ? Math.round((completedDays / evaluatedDays) * 100) : 0;
+            document.getElementById('global-adherence-rate').innerText = `${rate}%`;
+            document.getElementById('global-days-ratio').innerText = `${completedDays} / ${evaluatedDays}`;
+        }
+
+        // --- SEGUIMIENTO DE PROGRAMA ESPECÍFICO ---
+        function viewProgramTracking(progId) {
+            activeTrackingProgId = progId;
+            const prog = programs.find(p => p.id === progId);
+            if (!prog) return;
+
+            switchTab('program-tracking');
+            document.getElementById('prog-tracking-title').innerText = prog.nombre;
+            renderProgramTrackingView();
+        }
+
+        function renderProgramTrackingView() {
+            if (!activeTrackingProgId) return;
+            const prog = programs.find(p => p.id === activeTrackingProgId);
+            if (!prog) return;
+
+            const selectVal = document.getElementById('prog-month-select').value;
+            if (!selectVal) return;
+            const [year, monthVal] = selectVal.split('-').map(Number);
+            const month = monthVal - 1;
+
+            const now = new Date();
+            const isCurrentMonth = (now.getFullYear() === year && now.getMonth() === month);
+            const maxEvaluatedDay = isCurrentMonth ? now.getDate() : 31;
+
+            const grid = document.getElementById('prog-tracking-grid');
+            grid.innerHTML = '';
+
+            const diasSem = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            diasSem.forEach(d => {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'calendar-day-header';
+                headerCell.innerText = d;
+                grid.appendChild(headerCell);
+            });
+
+            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            let evaluatedDays = 0;
+            let completedDays = 0;
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const dObj = new Date(year, month, day);
+                const dateKey = formatDateKey(dObj);
+                const dayOfWeek = dObj.getDay();
+                const mapDays = [6, 0, 1, 2, 3, 4, 5];
+                const dayIndex = mapDays[dayOfWeek];
+                const monthYear = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                const tasks = getProgramTasksForDate(prog, dateKey, dayIndex, day, monthYear);
+                
+                let cellStatus = 'status-rest';
+                const isEvaluatedDate = day <= maxEvaluatedDay;
+
+                if (tasks.length > 0 && isEvaluatedDate) {
+                    evaluatedDays++;
+                    let doneCount = 0;
+                    tasks.forEach((_, idx) => {
+                        const tId = `${prog.id}-${dateKey}-${idx}`;
+                        if (completedTasks[tId]) doneCount++;
+                    });
+
+                    if (doneCount === tasks.length) {
+                        cellStatus = 'status-complete';
+                        completedDays++;
+                    } else if (doneCount > 0) {
+                        cellStatus = 'status-partial';
+                    } else {
+                        cellStatus = 'status-failed';
+                    }
+                }
+
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell ${cellStatus}`;
+                cell.style.opacity = isEvaluatedDate ? '1' : '0.4';
+                cell.innerHTML = `
+                    <span class="calendar-day-number">${day}</span>
+                    <div class="heatmap-indicator"></div>
+                `;
+                cell.onclick = () => openAuditModalSingle(prog, dateKey, tasks);
+                grid.appendChild(cell);
+            }
+
+            const rate = evaluatedDays > 0 ? Math.round((completedDays / evaluatedDays) * 100) : 0;
+            document.getElementById('prog-adherence-rate').innerText = `${rate}%`;
+            document.getElementById('prog-days-ratio').innerText = `${completedDays} / ${evaluatedDays}`;
+        }
+
+        // --- CONSTRUCTOR DE FORMULARIO ---
+        function renderFormBuilder(existingData = null) {
+            const type = document.getElementById('prog-type').value;
+            const container = document.getElementById('builder-container');
+            container.innerHTML = '';
+
+            if (type === 'FASES') {
+                let fases = existingData ? existingData.fases : [{ inicio: '', fin: '', actividades: [] }];
+                
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label class="form-label">Fases del Objetivo</label>
+                        <div id="fases-list" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        <button type="button" onclick="addFaseInput()" class="btn-secondary" style="margin-top: 0.25rem;">+ Agregar Fase</button>
+                    </div>`;
+                
+                const fasesList = document.getElementById('fases-list');
+                fases.forEach((f) => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: var(--slate-50); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); display: flex; flex-direction: column; gap: 0.5rem;";
+                    div.innerHTML = `
+                        <div class="flex-row-grid">
+                            <div>
+                                <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Inicio</span>
+                                <input type="date" name="fase-inicio" value="${f.inicio || ''}" required class="form-input">
+                            </div>
+                            <div>
+                                <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Fin</span>
+                                <input type="date" name="fase-fin" value="${f.fin || ''}" required class="form-input">
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Actividades diarias (separadas por coma)</span>
+                            <input type="text" name="fase-acts" value="${Array.isArray(f.actividades) ? f.actividades.join(', ') : ''}" placeholder="Ej. Cardio 30m, Hidratación" required class="form-input">
+                        </div>`;
+                    fasesList.appendChild(div);
+                });
+
+            } else if (type === 'SEMANAL') {
+                const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                let diasData = existingData ? existingData.dias : {};
+
+                let html = `
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Expiración del Programa</label>
+                        <input type="date" id="prog-fechafin" value="${existingData ? existingData.fechaFin : ''}" required class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rutina por Día de la Semana</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">`;
+                
+                diasSemana.forEach((dia, idx) => {
+                    const acts = diasData[idx] ? diasData[idx].join(', ') : '';
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--slate-50); padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--slate-200);">
+                            <span style="width: 4rem; font-size: 0.75rem; font-weight: 600; color: var(--slate-600);">${dia}</span>
+                            <input type="text" name="semanal-dia" data-index="${idx}" value="${acts}" placeholder="Actividades..." class="form-input" style="padding: 0.4rem 0.6rem;">
+                        </div>`;
+                });
+                html += `</div></div>`;
+                container.innerHTML = html;
+
+            } else if (type === 'MENSUAL') {
+                const now = new Date();
+                const defaultMes = existingData ? existingData.mesAno : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                tempMonthlyDays = existingData ? JSON.parse(JSON.stringify(existingData.diasMes || {})) : {};
+
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label class="form-label">Selecciona el Mes</label>
+                        <input type="month" id="prog-mesano" value="${defaultMes}" onchange="renderMonthlyCalendar()" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calendario del Mes (Toca un día para agregar/editar actividades)</label>
+                        <div id="monthly-calendar-grid" class="calendar-grid"></div>
+                    </div>`;
+                renderMonthlyCalendar();
+            }
+        }
+
+        function addFaseInput() {
+            const fasesList = document.getElementById('fases-list');
+            const div = document.createElement('div');
+            div.style.cssText = "background: var(--slate-50); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); display: flex; flex-direction: column; gap: 0.5rem;";
+            div.innerHTML = `
+                <div class="flex-row-grid">
+                    <div>
+                        <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Inicio</span>
+                        <input type="date" name="fase-inicio" required class="form-input">
+                    </div>
+                    <div>
+                        <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Fin</span>
+                        <input type="date" name="fase-fin" required class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 0.65rem; color: var(--slate-600); font-weight: 600;">Actividades diarias (separadas por coma)</span>
+                    <input type="text" name="fase-acts" placeholder="Ej. Cardio 30m, Hidratación" required class="form-input">
+                </div>`;
+            fasesList.appendChild(div);
+        }
+
+        function renderMonthlyCalendar() {
+            const mesAnoInput = document.getElementById('prog-mesano');
+            if (!mesAnoInput) return;
+            const [year, month] = mesAnoInput.value.split('-').map(Number);
+            const grid = document.getElementById('monthly-calendar-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const diasSem = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            diasSem.forEach(d => {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'calendar-day-header';
+                headerCell.innerText = d;
+                grid.appendChild(headerCell);
+            });
+
+            const totalDays = new Date(year, month, 0).getDate();
+            let firstDayIndex = new Date(year, month - 1, 1).getDay(); 
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1; 
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                const hasActs = tempMonthlyDays[day] && tempMonthlyDays[day].length > 0;
+                cell.className = `calendar-day-cell ${hasActs ? 'has-tasks' : ''}`;
+                cell.innerHTML = `
+                    <span class="calendar-day-number">${day}</span>
+                    ${hasActs ? '<div class="calendar-dot"></div>' : ''}
+                `;
+                cell.onclick = () => openDayModal(day);
+                grid.appendChild(cell);
+            }
+        }
+
+        function openDayModal(day) {
+            activeEditingDay = day;
+            const modal = document.getElementById('day-modal');
+            const title = document.getElementById('modal-day-title');
+            const input = document.getElementById('modal-day-input');
+            
+            title.innerText = `Día ${day} del Mes`;
+            input.value = tempMonthlyDays[day] ? tempMonthlyDays[day].join(', ') : '';
+            modal.classList.remove('hidden');
+        }
+
+        function closeDayModal() {
+            document.getElementById('day-modal').classList.add('hidden');
+            activeEditingDay = null;
+        }
+
+        function saveDayModal() {
+            if (activeEditingDay === null) return;
+            const inputVal = document.getElementById('modal-day-input').value;
+            const acts = inputVal.split(',').map(s => s.trim()).filter(Boolean);
+            
+            if (acts.length > 0) {
+                tempMonthlyDays[activeEditingDay] = acts;
+            } else {
+                delete tempMonthlyDays[activeEditingDay];
+            }
+            closeDayModal();
+            renderMonthlyCalendar();
+        }
+
+        // --- FUNCIONES AUXILIARES Y AUDITORÍA ---
+        function formatDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getProgramTasksForDate(prog, dateKey, dayIndex, dayNumber, monthYear) {
+            let tasks = [];
+            if (prog.tipo === 'FASES') {
+                prog.fases.forEach(fase => {
+                    if (dateKey >= fase.inicio && dateKey <= fase.fin) {
+                        tasks = fase.actividades;
+                    }
+                });
+            } else if (prog.tipo === 'SEMANAL') {
+                if (dateKey <= prog.fechaFin) {
+                    tasks = prog.dias[dayIndex] || [];
+                }
+            } else if (prog.tipo === 'MENSUAL') {
+                if (prog.mesAno === monthYear) {
+                    tasks = prog.diasMes && prog.diasMes[dayNumber] ? prog.diasMes[dayNumber] : [];
+                }
+            }
+            return tasks;
+        }
+
+        function openAuditModalGlobal(dateKey, tasks) {
+            const modal = document.getElementById('audit-modal');
+            document.getElementById('audit-modal-title').innerText = `Auditoría General: ${dateKey}`;
+            document.getElementById('audit-modal-subtitle').innerText = "Consolidado de todos los programas";
+
+            const listContainer = document.getElementById('audit-tasks-list');
+            listContainer.innerHTML = '';
+
+            if (tasks.length === 0) {
+                listContainer.innerHTML = '<p style="font-size: 0.75rem; color: var(--slate-400);">Sin actividades en ningún programa.</p>';
+            } else {
+                tasks.forEach((item) => {
+                    const isChecked = completedTasks[item.taskId] || false;
+
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: var(--slate-50); padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--slate-200);";
+                    div.innerHTML = `
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--slate-700); font-weight: 500; display: block;">${item.taskText}</span>
+                            <span class="badge">${item.progName}</span>
+                        </div>
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleTaskAuditGlobal('${item.taskId}')" style="width: 1.1rem; height: 1.1rem; accent-color: var(--primary); cursor: pointer;">
+                    `;
+                    listContainer.appendChild(div);
+                });
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function toggleTaskAuditGlobal(taskId) {
+            completedTasks[taskId] = !completedTasks[taskId];
+            localStorage.setItem('metadiaria_completed', JSON.stringify(completedTasks));
+            renderGlobalTrackingView();
+        }
+
+        function openAuditModalSingle(prog, dateKey, tasks) {
+            const modal = document.getElementById('audit-modal');
+            document.getElementById('audit-modal-title').innerText = `Auditoría: ${dateKey}`;
+            document.getElementById('audit-modal-subtitle').innerText = prog.nombre;
+
+            const listContainer = document.getElementById('audit-tasks-list');
+            listContainer.innerHTML = '';
+
+            if (tasks.length === 0) {
+                listContainer.innerHTML = '<p style="font-size: 0.75rem; color: var(--slate-400);">Día de descanso.</p>';
+            } else {
+                tasks.forEach((tText, idx) => {
+                    const tId = `${prog.id}-${dateKey}-${idx}`;
+                    const isChecked = completedTasks[tId] || false;
+
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: var(--slate-50); padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--slate-200);";
+                    div.innerHTML = `
+                        <span style="font-size: 0.75rem; color: var(--slate-700);">${tText}</span>
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleTaskAuditSingle('${tId}')" style="width: 1.1rem; height: 1.1rem; accent-color: var(--primary); cursor: pointer;">
+                    `;
+                    listContainer.appendChild(div);
+                });
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function toggleTaskAuditSingle(taskId) {
+            completedTasks[taskId] = !completedTasks[taskId];
+            localStorage.setItem('metadiaria_completed', JSON.stringify(completedTasks));
+            if (activeTrackingProgId) {
+                renderProgramTrackingView();
+            }
+        }
+
+        function closeAuditModal() {
+            document.getElementById('audit-modal').classList.add('hidden');
+        }
+
+        // --- GUARDAR / EDITAR PROGRAMAS ---
+        function saveProgram(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-program-id').value || 'prog_' + Date.now();
+            const nombre = document.getElementById('prog-name').value;
+            const tipo = document.getElementById('prog-type').value;
+
+            let newProg = { id, nombre, tipo };
+
+            if (tipo === 'FASES') {
+                const inicios = document.querySelectorAll('input[name="fase-inicio"]');
+                const fines = document.querySelectorAll('input[name="fase-fin"]');
+                const acts = document.querySelectorAll('input[name="fase-acts"]');
+                
+                newProg.fases = [];
+                for (let i = 0; i < inicios.length; i++) {
+                    newProg.fases.push({
+                        inicio: inicios[i].value,
+                        fin: fines[i].value,
+                        actividades: acts[i].value.split(',').map(s => s.trim()).filter(Boolean)
+                    });
+                }
+            } else if (tipo === 'SEMANAL') {
+                newProg.fechaFin = document.getElementById('prog-fechafin').value;
+                newProg.dias = {};
+                const inputs = document.querySelectorAll('input[name="semanal-dia"]');
+                inputs.forEach(inp => {
+                    const idx = inp.getAttribute('data-index');
+                    newProg.dias[idx] = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+                });
+            } else if (tipo === 'MENSUAL') {
+                newProg.mesAno = document.getElementById('prog-mesano').value;
+                newProg.diasMes = tempMonthlyDays;
+            }
+
+            const index = programs.findIndex(p => p.id === id);
+            if (index >= 0) {
+                programs[index] = newProg;
+            } else {
+                programs.push(newProg);
+            }
+
+            localStorage.setItem('metadiaria_programs', JSON.stringify(programs));
+            switchTab('programs');
+        }
+
+        // --- GESTIÓN DE PROGRAMAS ---
+        function renderProgramsList() {
+            const container = document.getElementById('programs-list-container');
+            container.innerHTML = '';
+
+            if (programs.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="text-align: center; padding: 2rem 1rem;">
+                        <p style="font-size: 0.875rem; color: var(--slate-400); margin-bottom: 0.75rem;">No tienes programas configurados.</p>
+                        <button onclick="switchTab('new')" class="btn-primary btn-sm" style="margin: 0 auto; width: auto;">Crear mi primer programa</button>
+                    </div>`;
+                return;
+            }
+
+            programs.forEach(prog => {
+                const div = document.createElement('div');
+                div.className = "card";
+                div.style.cssText = "flex-direction: row; justify-content: space-between; align-items: center; padding: 1rem;";
+                div.innerHTML = `
+                    <div>
+                        <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--slate-800);">${prog.nombre}</h3>
+                        <span class="badge">${prog.tipo}</span>
+                    </div>
+                    <div style="display: flex; gap: 0.3rem;">
+                        <button onclick="viewProgramTracking('${prog.id}')" class="btn-primary btn-sm" style="padding: 0.4rem 0.6rem;">Seguimiento</button>
+                        <button onclick="editProgram('${prog.id}')" class="btn-secondary btn-sm" style="padding: 0.4rem 0.6rem;">Editar</button>
+                        <button onclick="deleteProgram('${prog.id}')" class="btn-danger btn-sm" style="padding: 0.4rem 0.6rem;">Borrar</button>
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function editProgram(id) {
+            const prog = programs.find(p => p.id === id);
+            if (!prog) return;
+
+            switchTab('new');
+            document.getElementById('form-title').innerText = "Editar Programa";
+            document.getElementById('edit-program-id').value = prog.id;
+            document.getElementById('prog-name').value = prog.nombre;
+            document.getElementById('prog-type').value = prog.tipo;
+            renderFormBuilder(prog);
+        }
+
+        function deleteProgram(id) {
+            if (confirm("¿Estás seguro de eliminar este programa?")) {
+                programs = programs.filter(p => p.id !== id);
+                localStorage.setItem('metadiaria_programs', JSON.stringify(programs));
+                renderProgramsList();
+            }
+        }
+    </script>
+</body>
+</html>
