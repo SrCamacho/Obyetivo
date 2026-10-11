@@ -338,12 +338,8 @@
 
             try {
                 showSyncStatus("Sincronizando...");
-                // Añadimos un parámetro de tiempo para evitar que el navegador use caché vieja
-                const response = await fetch(`https://api.github.com/gists/${gistConfig.gistId}?t=${Date.now()}`, {
-                    headers: { 
-                        'Authorization': `token ${gistConfig.token}`,
-                        'Cache-Control': 'no-cache'
-                    }
+                const response = await fetch(`https://api.github.com/gists/${gistConfig.gistId}`, {
+                    headers: { 'Authorization': `token ${gistConfig.token}` }
                 });
 
                 if (!response.ok) throw new Error('No se pudo leer el Gist.');
@@ -356,12 +352,12 @@
                     completedTasks = cloudData.completedTasks || {};
                     fixedGoals = cloudData.fixedGoals || fixedGoals;
 
-                    // Actualizar localStorage local con los datos frescos de la nube
+                    // Actualizar localStorage local
                     localStorage.setItem('metadiaria_programs', JSON.stringify(programs));
                     localStorage.setItem('metadiaria_completed', JSON.stringify(completedTasks));
                     localStorage.setItem('metadiaria_fixed_goals', JSON.stringify(fixedGoals));
 
-                    // Refrescar vistas activas en pantalla
+                    // Refrescar vistas activas
                     renderFixedGoals();
                     renderTodayView();
                     renderProgramsList();
