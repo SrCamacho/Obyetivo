@@ -242,7 +242,7 @@
         </button>
     </nav>
 
-    <!-- Lógica JavaScript -->
+<!-- Lógica JavaScript -->
     <script>
         let programs = JSON.parse(localStorage.getItem('metadiaria_programs')) || [];
         let completedTasks = JSON.parse(localStorage.getItem('metadiaria_completed')) || {};
@@ -267,48 +267,40 @@
         function updateHeaderDate() {
             const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
             const todayStr = new Date().toLocaleDateString('es-CO', options);
-            document.getElementById('current-date-header').innerText = todayStr;
-            document.getElementById('today-subtitle').innerText = `Metas correspondientes al ${todayStr}`;
+            const headerEl = document.getElementById('current-date-header');
+            const subEl = document.getElementById('today-subtitle');
+            if (headerEl) headerEl.innerText = todayStr;
+            if (subEl) subEl.innerText = `Metas correspondientes al ${todayStr}`;
         }
 
-        // --- CÁLCULO DE RACHA DE CONSISTENCIA ---
+        // --- CÁLCULO DE RACHA DE CONSISTENCIA (Blindado contra bucles) ---
         function calculateStreak() {
             let streak = 0;
             let checkDate = new Date();
             
-            // Evaluar HOY primero
-            const todayKey = formatDateKey(checkDate);
+            // Evaluar HOY
             const todayTasks = getGlobalTasksForDate(checkDate);
-            
-            let todayCompleted = false;
             if (todayTasks.length > 0) {
                 let doneCount = todayTasks.filter(item => completedTasks[item.taskId]).length;
                 if (doneCount === todayTasks.length) {
                     streak++;
-                    todayCompleted = true;
                 }
             }
 
-            // Evaluar días anteriores consecutivos hacia atrás
-            checkDate.setDate(checkDate.getDate() - 1);
-
-            while (true) {
-                const dateKey = formatDateKey(checkDate);
+            // Evaluar días anteriores hacia atrás (Limitado a máximo 90 días para evitar bloqueos)
+            for (let i = 1; i <= 90; i++) {
+                checkDate.setDate(checkDate.getDate() - 1);
                 const tasks = getGlobalTasksForDate(checkDate);
 
                 if (tasks.length === 0) {
-                    // Día de descanso total: no rompe la racha, retrocede un día más
-                    checkDate.setDate(checkDate.getDate() - 1);
-                    continue;
+                    continue; // Día sin tareas: salta sin romper la racha
                 }
 
                 let doneCount = tasks.filter(item => completedTasks[item.taskId]).length;
                 if (doneCount === tasks.length) {
                     streak++;
-                    checkDate.setDate(checkDate.getDate() - 1);
                 } else {
-                    // Se rompió la racha en este día pasado
-                    break;
+                    break; // Se rompió la racha
                 }
             }
 
@@ -340,6 +332,7 @@
         // --- GESTIÓN DE METAS FIJAS ---
         function renderFixedGoals() {
             const container = document.getElementById('fixed-goals-container');
+            if (!container) return;
             container.innerHTML = '';
 
             if (fixedGoals.length === 0) {
@@ -483,14 +476,16 @@
         // --- VISTA HOY ---
         function renderTodayView() {
             const container = document.getElementById('today-tasks-container');
+            if (!container) return;
             container.innerHTML = '';
             
             const now = new Date();
             const allTasksForToday = getGlobalTasksForDate(now);
 
-            // Actualizar Racha
+            // Actualizar Racha de forma segura
             const streak = calculateStreak();
-            document.getElementById('streak-badge').innerText = `🔥 ${streak} ${streak === 1 ? 'día' : 'días'}`;
+            const streakEl = document.getElementById('streak-badge');
+            if (streakEl) streakEl.innerText = `🔥 ${streak} ${streak === 1 ? 'día' : 'días'}`;
 
             if (allTasksForToday.length === 0) {
                 container.innerHTML = `
@@ -530,16 +525,19 @@
 
         function updateProgress(completed, total) {
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-            document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-text').innerText = `${completed} de ${total} completadas`;
-            document.getElementById('progress-percent').innerText = `${percent}%`;
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            const percText = document.getElementById('progress-percent');
+            if (bar) bar.style.width = `${percent}%`;
+            if (text) text.innerText = `${completed} de ${total} completadas`;
+            if (percText) percText.innerText = `${percent}%`;
         }
 
         // --- SEGUIMIENTO GENERAL ---
         function renderGlobalTrackingView() {
-            const selectVal = document.getElementById('global-month-select').value;
-            if (!selectVal) return;
-            const [year, monthVal] = selectVal.split('-').map(Number);
+            const selectEl = document.getElementById('global-month-select');
+            if (!selectEl || !selectEl.value) return;
+            const [year, monthVal] = selectEl.value.split('-').map(Number);
             const month = monthVal - 1; 
 
             const now = new Date();
@@ -547,6 +545,7 @@
             const maxEvaluatedDay = isCurrentMonth ? now.getDate() : 31;
 
             const grid = document.getElementById('global-tracking-grid');
+            if (!grid) return;
             grid.innerHTML = '';
 
             const diasSem = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -605,8 +604,10 @@
             }
 
             const rate = evaluatedDays > 0 ? Math.round((completedDays / evaluatedDays) * 100) : 0;
-            document.getElementById('global-adherence-rate').innerText = `${rate}%`;
-            document.getElementById('global-days-ratio').innerText = `${completedDays} / ${evaluatedDays}`;
+            const rateEl = document.getElementById('global-adherence-rate');
+            const ratioEl = document.getElementById('global-days-ratio');
+            if (rateEl) rateEl.innerText = `${rate}%`;
+            if (ratioEl) ratioEl.innerText = `${completedDays} / ${evaluatedDays}`;
         }
 
         // --- SEGUIMIENTO DE PROGRAMA ESPECÍFICO ---
@@ -616,7 +617,8 @@
             if (!prog) return;
 
             switchTab('program-tracking');
-            document.getElementById('prog-tracking-title').innerText = prog.nombre;
+            const titleEl = document.getElementById('prog-tracking-title');
+            if (titleEl) titleEl.innerText = prog.nombre;
             renderProgramTrackingView();
         }
 
@@ -625,9 +627,9 @@
             const prog = programs.find(p => p.id === activeTrackingProgId);
             if (!prog) return;
 
-            const selectVal = document.getElementById('prog-month-select').value;
-            if (!selectVal) return;
-            const [year, monthVal] = selectVal.split('-').map(Number);
+            const selectEl = document.getElementById('prog-month-select');
+            if (!selectEl || !selectEl.value) return;
+            const [year, monthVal] = selectEl.value.split('-').map(Number);
             const month = monthVal - 1;
 
             const now = new Date();
@@ -635,6 +637,7 @@
             const maxEvaluatedDay = isCurrentMonth ? now.getDate() : 31;
 
             const grid = document.getElementById('prog-tracking-grid');
+            if (!grid) return;
             grid.innerHTML = '';
 
             const diasSem = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -699,14 +702,19 @@
             }
 
             const rate = evaluatedDays > 0 ? Math.round((completedDays / evaluatedDays) * 100) : 0;
-            document.getElementById('prog-adherence-rate').innerText = `${rate}%`;
-            document.getElementById('prog-days-ratio').innerText = `${completedDays} / ${evaluatedDays}`;
+            const rateEl = document.getElementById('prog-adherence-rate');
+            const ratioEl = document.getElementById('prog-days-ratio');
+            if (rateEl) rateEl.innerText = `${rate}%`;
+            if (ratioEl) ratioEl.innerText = `${completedDays} / ${evaluatedDays}`;
         }
 
         // --- CONSTRUCTOR DE FORMULARIO ---
         function renderFormBuilder(existingData = null) {
-            const type = document.getElementById('prog-type').value;
+            const typeEl = document.getElementById('prog-type');
+            if (!typeEl) return;
+            const type = typeEl.value;
             const container = document.getElementById('builder-container');
+            if (!container) return;
             container.innerHTML = '';
 
             if (type === 'FASES') {
@@ -785,6 +793,7 @@
 
         function addFaseInput() {
             const fasesList = document.getElementById('fases-list');
+            if (!fasesList) return;
             const div = document.createElement('div');
             div.style.cssText = "background: var(--slate-50); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--slate-200); display: flex; flex-direction: column; gap: 0.5rem;";
             div.innerHTML = `
@@ -848,20 +857,22 @@
             const title = document.getElementById('modal-day-title');
             const input = document.getElementById('modal-day-input');
             
-            title.innerText = `Día ${day} del Mes`;
-            input.value = tempMonthlyDays[day] ? tempMonthlyDays[day].join(', ') : '';
-            modal.classList.remove('hidden');
+            if (title) title.innerText = `Día ${day} del Mes`;
+            if (input) input.value = tempMonthlyDays[day] ? tempMonthlyDays[day].join(', ') : '';
+            if (modal) modal.classList.remove('hidden');
         }
 
         function closeDayModal() {
-            document.getElementById('day-modal').classList.add('hidden');
+            const modal = document.getElementById('day-modal');
+            if (modal) modal.classList.add('hidden');
             activeEditingDay = null;
         }
 
         function saveDayModal() {
             if (activeEditingDay === null) return;
-            const inputVal = document.getElementById('modal-day-input').value;
-            const acts = inputVal.split(',').map(s => s.trim()).filter(Boolean);
+            const input = document.getElementById('modal-day-input');
+            if (!input) return;
+            const acts = input.value.split(',').map(s => s.trim()).filter(Boolean);
             
             if (acts.length > 0) {
                 tempMonthlyDays[activeEditingDay] = acts;
@@ -883,14 +894,16 @@
         function getProgramTasksForDate(prog, dateKey, dayIndex, dayNumber, monthYear) {
             let tasks = [];
             if (prog.tipo === 'FASES') {
-                prog.fases.forEach(fase => {
-                    if (dateKey >= fase.inicio && dateKey <= fase.fin) {
-                        tasks = fase.actividades;
-                    }
-                });
+                if (prog.fases) {
+                    prog.fases.forEach(fase => {
+                        if (dateKey >= fase.inicio && dateKey <= fase.fin) {
+                            tasks = fase.actividades;
+                        }
+                    });
+                }
             } else if (prog.tipo === 'SEMANAL') {
-                if (dateKey <= prog.fechaFin) {
-                    tasks = prog.dias[dayIndex] || [];
+                if (prog.fechaFin && dateKey <= prog.fechaFin) {
+                    tasks = prog.dias && prog.dias[dayIndex] ? prog.dias[dayIndex] : [];
                 }
             } else if (prog.tipo === 'MENSUAL') {
                 if (prog.mesAno === monthYear) {
@@ -902,10 +915,13 @@
 
         function openAuditModalGlobal(dateKey, tasks) {
             const modal = document.getElementById('audit-modal');
-            document.getElementById('audit-modal-title').innerText = `Auditoría General: ${dateKey}`;
-            document.getElementById('audit-modal-subtitle').innerText = "Consolidado de todos los programas";
-
+            const title = document.getElementById('audit-modal-title');
+            const sub = document.getElementById('audit-modal-subtitle');
             const listContainer = document.getElementById('audit-tasks-list');
+            
+            if (title) title.innerText = `Auditoría General: ${dateKey}`;
+            if (sub) sub.innerText = "Consolidado de todos los programas";
+            if (!listContainer) return;
             listContainer.innerHTML = '';
 
             if (tasks.length === 0) {
@@ -927,7 +943,7 @@
                 });
             }
 
-            modal.classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function toggleTaskAuditGlobal(taskId) {
@@ -938,10 +954,13 @@
 
         function openAuditModalSingle(prog, dateKey, tasks) {
             const modal = document.getElementById('audit-modal');
-            document.getElementById('audit-modal-title').innerText = `Auditoría: ${dateKey}`;
-            document.getElementById('audit-modal-subtitle').innerText = prog.nombre;
-
+            const title = document.getElementById('audit-modal-title');
+            const sub = document.getElementById('audit-modal-subtitle');
             const listContainer = document.getElementById('audit-tasks-list');
+
+            if (title) title.innerText = `Auditoría: ${dateKey}`;
+            if (sub) sub.innerText = prog.nombre;
+            if (!listContainer) return;
             listContainer.innerHTML = '';
 
             if (tasks.length === 0) {
@@ -961,7 +980,7 @@
                 });
             }
 
-            modal.classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function toggleTaskAuditSingle(taskId) {
@@ -973,15 +992,22 @@
         }
 
         function closeAuditModal() {
-            document.getElementById('audit-modal').classList.add('hidden');
+            const modal = document.getElementById('audit-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
         // --- GUARDAR / EDITAR PROGRAMAS ---
         function saveProgram(event) {
             event.preventDefault();
-            const id = document.getElementById('edit-program-id').value || 'prog_' + Date.now();
-            const nombre = document.getElementById('prog-name').value;
-            const tipo = document.getElementById('prog-type').value;
+            const idEl = document.getElementById('edit-program-id');
+            const nameEl = document.getElementById('prog-name');
+            const typeEl = document.getElementById('prog-type');
+
+            if (!nameEl || !typeEl) return;
+
+            const id = (idEl && idEl.value) ? idEl.value : 'prog_' + Date.now();
+            const nombre = nameEl.value;
+            const tipo = typeEl.value;
 
             let newProg = { id, nombre, tipo };
 
@@ -999,7 +1025,8 @@
                     });
                 }
             } else if (tipo === 'SEMANAL') {
-                newProg.fechaFin = document.getElementById('prog-fechafin').value;
+                const finEl = document.getElementById('prog-fechafin');
+                newProg.fechaFin = finEl ? finEl.value : '';
                 newProg.dias = {};
                 const inputs = document.querySelectorAll('input[name="semanal-dia"]');
                 inputs.forEach(inp => {
@@ -1007,7 +1034,8 @@
                     newProg.dias[idx] = inp.value.split(',').map(s => s.trim()).filter(Boolean);
                 });
             } else if (tipo === 'MENSUAL') {
-                newProg.mesAno = document.getElementById('prog-mesano').value;
+                const mesAnoEl = document.getElementById('prog-mesano');
+                newProg.mesAno = mesAnoEl ? mesAnoEl.value : '';
                 newProg.diasMes = tempMonthlyDays;
             }
 
@@ -1025,6 +1053,7 @@
         // --- GESTIÓN DE PROGRAMAS ---
         function renderProgramsList() {
             const container = document.getElementById('programs-list-container');
+            if (!container) return;
             container.innerHTML = '';
 
             if (programs.length === 0) {
@@ -1059,10 +1088,15 @@
             if (!prog) return;
 
             switchTab('new');
-            document.getElementById('form-title').innerText = "Editar Programa";
-            document.getElementById('edit-program-id').value = prog.id;
-            document.getElementById('prog-name').value = prog.nombre;
-            document.getElementById('prog-type').value = prog.tipo;
+            const titleEl = document.getElementById('form-title');
+            const idEl = document.getElementById('edit-program-id');
+            const nameEl = document.getElementById('prog-name');
+            const typeEl = document.getElementById('prog-type');
+
+            if (titleEl) titleEl.innerText = "Editar Programa";
+            if (idEl) idEl.value = prog.id;
+            if (nameEl) nameEl.value = prog.nombre;
+            if (typeEl) typeEl.value = prog.tipo;
             renderFormBuilder(prog);
         }
 
